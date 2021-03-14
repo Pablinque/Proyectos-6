@@ -15,8 +15,11 @@ public class Player : MonoBehaviour
     public bool Mandato2 = false;
     public bool interacionDisponible = false;
     public bool balaDanoFuego = false;
+    public bool Dash=false;
+    public bool cambio = false;
 
-     
+
+
 
     public Vector3 Movimiento;
     public Vector3 Ataque;
@@ -31,6 +34,8 @@ public class Player : MonoBehaviour
 
 
     public float Velocidad = 0.1f;
+    public float velocidadNormal = 0.1f;
+    public float velocidadDash = 0.6f;
     public float vida = 10;
     public float vidaMax = 10;
     public float dano = 1;
@@ -48,6 +53,12 @@ public class Player : MonoBehaviour
     public float ultimoDisparo;
     public float delayDisparo=0.5f;
 
+    public float tiempoDash;
+    public float delayDash;
+    public float guardarInputX;
+    public float guardarInputY;
+    
+
 
 
     public Animator anim;
@@ -63,7 +74,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-
+        Debug.Log(Movimiento);
 
         if (coldownAtaque >= 0)
         {
@@ -90,10 +101,18 @@ public class Player : MonoBehaviour
             delayExplosion -= Time.deltaTime;
             
         }
+        if(tiempoDash>=0)
+        {
+            tiempoDash -= Time.deltaTime;
+        }
+        if(delayDash>0)
+        {
+            delayDash -= Time.deltaTime;
+        }
 
 
 
-        if (delayTiempoAtaqueUp <= 0)
+        if (delayTiempoAtaqueUp <= 0 && cambio==true)
         {
             dano = dañoBase;
             dañoJugadorActivado = true;
@@ -105,6 +124,15 @@ public class Player : MonoBehaviour
         {
             areaDanoExplosion.SetActive(false);
         }
+        if(tiempoDash<=0 && Dash==true)
+        {
+            
+            Velocidad = velocidadNormal;
+            delayDash = 3;
+            dañoJugadorActivado = true;
+            Dash = false;
+
+        }
 
 
         if (movJugadorActivado == true)
@@ -112,47 +140,70 @@ public class Player : MonoBehaviour
 
 
 
-
-            Movimiento.x = (Velocidad * Input.GetAxis("Horizontal"));
-            if(Input.GetKey("a"))
+            if (Dash == false)
             {
-                anim.SetBool("A", true);
-            }
+                guardarInputX = Input.GetAxis("Horizontal");
+                guardarInputY = Input.GetAxis("Vertical");
 
-            if(Input.GetKeyUp("a"))
-            {
-                anim.SetBool("A", false);
-            }
+                Movimiento.x = (Velocidad * guardarInputX);
+                if (Input.GetKey("a"))
+                {
+                    anim.SetBool("A", true);
+                }
 
-            if (Input.GetKey("d"))
-            {
-                anim.SetBool("D", true);
+                if (Input.GetKeyUp("a"))
+                {
+                    anim.SetBool("A", false);
+                }
+
+                if (Input.GetKey("d"))
+                {
+                    anim.SetBool("D", true);
+
+                }
+                if (Input.GetKeyUp("d"))
+                {
+                    anim.SetBool("D", false);
+                }
+
+
+
+
+                Movimiento.y = (Velocidad * guardarInputY);
+                if (Input.GetKey("s"))
+                {
+                    anim.SetBool("S", true);
+                }
+                if (Input.GetKeyUp("s"))
+                {
+                    anim.SetBool("S", false);
+                }
+                if (Input.GetKey("w"))
+                {
+                    anim.SetBool("W", true);
+                }
+                if (Input.GetKeyUp("w"))
+                {
+                    anim.SetBool("W", false);
+                }
                 
-            }
-            if (Input.GetKeyUp("d"))
-            {
-                anim.SetBool("D", false);
+
             }
            
+            
+            
+            if (Input.GetKeyDown(KeyCode.Space) && Dash == false && delayDash<=0)
+            {
+                
+                Dash = true;
+                Velocidad = velocidadDash;
+                Movimiento.x = guardarInputX * Velocidad;
+                Movimiento.y = guardarInputY * Velocidad;
+                
+                dañoJugadorActivado = false;
+                tiempoDash = 0.15f;
+                
 
-
-
-            Movimiento.y = (Velocidad * Input.GetAxis("Vertical"));
-            if (Input.GetKey("s"))
-            {
-                anim.SetBool("S", true);
-            }
-            if (Input.GetKeyUp("s"))
-            {
-                anim.SetBool("S", false);
-            }
-            if (Input.GetKey("w"))
-            {
-                anim.SetBool("W", true);
-            }
-            if (Input.GetKeyUp("w"))
-            {
-                anim.SetBool("W", false);
             }
 
 
@@ -170,7 +221,7 @@ public class Player : MonoBehaviour
             }
 
 
-                if (vida<=0)
+            if (vida<=0)
             {
                 SceneManager.LoadScene("MainMenu");
             }
@@ -259,7 +310,7 @@ public class Player : MonoBehaviour
 
         if (ArcangelMiguel==true)
         {
-            areaAtaqueMiguel.transform.position = Jugador.transform.position + new Vector3(x * 2, y * 2, 0);
+            areaAtaqueMiguel.transform.position = Jugador.transform.position + new Vector3(x ,y ,0);
 
             areaAtaqueMiguel.SetActive(true);
             delayAtaque = 0.5f;
@@ -273,7 +324,7 @@ public class Player : MonoBehaviour
                 GameObject bullet = Instantiate(prefabDisparo, transform.position, transform.rotation) as GameObject;
                 bullet.AddComponent<Rigidbody2D>().gravityScale = 0;
                 bullet.GetComponent<Rigidbody2D>().velocity = new Vector3((x < 0) ? Mathf.Floor(x) * velocidadDisparo : Mathf.Ceil(x) * velocidadDisparo, (y < 0) ? Mathf.Floor(y) * velocidadDisparo : Mathf.Ceil(y) * velocidadDisparo, 0);
-            
+            cambio = true;
         }
     }
 
@@ -285,7 +336,7 @@ public class Player : MonoBehaviour
             delayTiempoAtaqueUp = 3;
             dañoJugadorActivado = false;
                 delayHabilidades = 5;
-
+            cambio = true;
         }
     }
     void miguelMandamiento2()
@@ -294,8 +345,9 @@ public class Player : MonoBehaviour
         {
             delayTiempoAtaqueUp = 3;
             dano = dañoMegaAunmentado;
-            
-            
+            cambio = true;
+
+
         }
     }
     void miguelNoMandamiento()
@@ -306,7 +358,7 @@ public class Player : MonoBehaviour
             dano = dañoAumentado;
             delayTiempoAtaqueUp = 3;
             delayHabilidades = 5;
-
+            cambio = true;
             if (vida > vidaMax)
             {
                 vida = vidaMax;
@@ -332,7 +384,7 @@ public class Player : MonoBehaviour
         if (delayHabilidades <= 0)
         {
             balaDanoFuego = true;
-
+            cambio = true;
             delayTiempoAtaqueUp = 3;
             delayHabilidades = 5;
         }
